@@ -1,0 +1,18 @@
+#ddev-generated
+hooks:
+  pre-start:
+    - exec-host: |
+        if [ -n "${DDEV_PRIMARY_URL:-}" ]; then
+          primary_host=$(echo "$DDEV_PRIMARY_URL" | sed -E 's|https?://||; s|:[0-9]+||')
+
+          # Write/overwrite the saml-idp env file completely (it's owned by this addon)
+          printf 'SAML_SP_PRIMARY_HOST=%s\nSAML_IDP_PRIMARY_HOST=idp.%s\n' "$primary_host" "$primary_host" > .ddev/.env.saml-idp
+
+          # Append to .env.web only if the variable is not already there
+          if [ ! -f .ddev/.env.web ] || ! grep -q "^SAML_IDP_PRIMARY_HOST=" .ddev/.env.web; then
+            echo "SAML_IDP_PRIMARY_HOST=idp.$primary_host" >> .ddev/.env.web
+          else
+            # Update the existing line in-place so the value stays current
+            sed -i "s|^SAML_IDP_PRIMARY_HOST=.*|SAML_IDP_PRIMARY_HOST=idp.$primary_host|" .ddev/.env.web
+          fi
+        fi
