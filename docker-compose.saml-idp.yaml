@@ -2,14 +2,46 @@
 services:
   saml-idp:
     container_name: ddev-${DDEV_SITENAME}-saml-idp
-    image: ${SAML_IDP_DOCKER_IMAGE:-ddev/ddev-utilities:latest}
-    command: tail -f /dev/null
+    profiles:
+      - saml-idp
+    build:
+      context: ./saml-idp
+      dockerfile: Dockerfile
+      args:
+        # PHP_IMAGE_TAG defines the PHP version used for the base image.
+        # It is combined with '-apache' in the Dockerfile (e.g., php:8.4-apache).
+        PHP_IMAGE_TAG: ${PHP_IMAGE_TAG:-8.4}
+        # SSP_VERSION defines the SimpleSAMLphp version or version constraint to install.
+        SSP_VERSION: ${SSP_VERSION:-^2.2}
     restart: "no"
-    # These labels ensure this service is discoverable by DDEV.
-    labels:
-      com.ddev.site-name: ${DDEV_SITENAME}
-      com.ddev.approot: ${DDEV_APPROOT}
-
+    env_file:
+      - .env.saml-idp
+    environment:
+      - DDEV_UID=${DDEV_UID}
+      - DDEV_GID=${DDEV_GID}
+      - VIRTUAL_HOST=${SAML_IDP_PRIMARY_HOST}
+      - HTTP_EXPOSE=80
+      - HTTPS_EXPOSE=443:80
+      - DDEV_PRIMARY_URL=${DDEV_PRIMARY_URL}
+      - IS_DDEV_PROJECT=${IS_DDEV_PROJECT}
+      - SSP_ADMIN_PASSWORD=${SSP_ADMIN_PASSWORD:-admin}
+      - SSP_SECRET_SALT=${SSP_SECRET_SALT:-default_development_secret_salt_12345678_override_me}
+      - TZ=${TZ:-UTC}
     volumes:
-      - ".:/mnt/ddev_config"
+      - ".:/mnt/ddev_config:ro"
+      - "./saml-idp/config:/var/www/simplesamlphp/config"
+      - "./saml-idp/metadata:/var/www/simplesamlphp/metadata"
+      - "./saml-idp/certs:/var/www/simplesamlphp/certs"
+      - "saml-idp-var:/var/www/simplesamlphp/var"
       - "ddev-global-cache:/mnt/ddev-global-cache"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/simplesaml/"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  saml-idp-var:

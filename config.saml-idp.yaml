@@ -1,0 +1,10 @@
+#ddev-generated
+hooks:
+  pre-start:
+    - exec-host: |
+        if [ -n "${DDEV_PRIMARY_URL:-}" ]; then
+          primary_host=$(echo "$DDEV_PRIMARY_URL" | sed -E 's|https?://||; s|:[0-9]+||')
+          echo "SAML_SP_PRIMARY_HOST=$primary_host" > .ddev/.env.saml-idp
+          echo "SAML_IDP_PRIMARY_HOST=idp.$primary_host" >> .ddev/.env.saml-idp
+          echo "SAML_IDP_PRIMARY_HOST=idp.$primary_host" > .ddev/.env.web
+        fi
