@@ -206,6 +206,82 @@ EOF
   rm -f .ddev/docker-compose.version-pinning.yaml
 }
 
+@test "e2e saml login" {
+  set -eu -o pipefail
+  echo "# e2e saml login test: setting up Drupal with Samlauth and Behat" >&3
+
+  # Prepare a fresh Drupal recommended project inside the DDEV container
+  run ddev composer create-project --no-install 'drupal/recommended-project:^11'
+  assert_success
+
+  # Configure plugins and require dependencies
+  run ddev composer config --no-plugins allow-plugins true
+  assert_success
+  run ddev composer require 'drupal/core-dev:^11' 'drush/drush:^13' 'drupal/drupal-extension:^5.4' 'drupal/samlauth:^3.8' -W --no-security-blocking
+  assert_success
+
+  # Copy Behat fixtures
+  cp "${DIR}/tests/fixtures/behat/behat.yml" .
+  mkdir -p behat
+  cp "${DIR}/tests/fixtures/behat/saml_login.feature" behat/
+
+  # Install ddev-selenium-standalone-chrome addon
+  run ddev add-on get ddev/ddev-selenium-standalone-chrome
+  assert_success
+
+  # Install local saml-idp addon
+  run ddev add-on get "${DIR}"
+  assert_success
+
+  # Add network aliases so any container can resolve the local Drupal site and the local SAML IDP directly
+  cat <<EOF > .ddev/docker-compose.selenium-hosts.yaml
+version: '3.6'
+services:
+  web:
+    networks:
+      default:
+        aliases:
+          - "${PROJNAME}.ddev.site"
+  saml-idp:
+    networks:
+      default:
+        aliases:
+          - "idp.${PROJNAME}.ddev.site"
+EOF
+
+  # Restart DDEV to apply all additions and start the saml-idp profile
+  run ddev restart && ddev start --profiles=saml-idp
+  assert_success
+
+  # Perform standard Drupal installation
+  run ddev exec -d /var/www/html/web "../vendor/bin/drush si -y --account-name=admin --account-pass=password standard"
+  assert_success
+
+  # Enable the samlauth module
+  run ddev exec -d /var/www/html/web "../vendor/bin/drush en -y samlauth"
+  assert_success
+
+  # Append test-specific overrides to settings.local.php to use HTTP for the IdP SSO/SLO endpoints.
+  # This lets the browser connect to the IdP over port 80, while the SP (Drupal) can still be on port 443 (HTTPS) container-to-container.
+  cat <<'EOF' >> web/sites/default/settings.local.php
+
+// --- BEGIN E2E TEST OVERRIDES ---
+if (getenv('IS_DDEV_PROJECT')) {
+  $idp_host = getenv('SAML_IDP_PRIMARY_HOST') ?: 'idp.example.ddev.site';
+  $config['samlauth.authentication']['sp_entity_id'] = 'https://' . getenv('SAML_SP_PRIMARY_HOST');
+  $config['samlauth.authentication']['idp_entity_id'] = 'https://' . $idp_host . '/simplesaml/saml2/idp/metadata';
+  $config['samlauth.authentication']['idp_single_sign_on_service'] = 'http://' . $idp_host . '/simplesaml/module.php/saml/idp/singleSignOnService';
+  $config['samlauth.authentication']['idp_single_log_out_service'] = 'http://' . $idp_host . '/simplesaml/module.php/saml/idp/singleLogoutService';
+}
+// --- END E2E TEST OVERRIDES ---
+EOF
+
+  # Run the Behat tests
+  # Override BEHAT_PARAMS to use HTTPS base_url and ignore certificate errors
+  run ddev exec BEHAT_PARAMS='{"extensions":{"Behat\\MinkExtension":{"base_url":"https://'${PROJNAME}'.ddev.site","default_session":"selenium2","javascript_session":"selenium2","sessions":{"selenium2":{"selenium2":{"browser":"chrome","wd_host":"http://selenium-chrome:4444/wd/hub","capabilities":{"browserName":"chrome","extra_capabilities":{"goog:chromeOptions":{"w3c":true,"args":["--headless","--disable-gpu","--no-sandbox","--disable-dev-shm-usage","--dns-prefetch-disable","--window-size=1920,1080","--ignore-certificate-errors"]}}}}}}},"Drupal\\DrupalExtension":{"blackbox":null,"api_driver":"drupal","drush":{"root":"/var/www/html/web"},"drupal":{"drupal_root":"/var/www/html/web"}}}}' vendor/bin/behat -vvv
+  assert_success
+}
+
 # bats test_tags=release
 @test "install from release" {
   set -eu -o pipefail
