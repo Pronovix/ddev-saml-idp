@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# #ddev-generated
 set -e
 
 # Copy default configuration files to the mounted volume if config.php is missing
