@@ -25,19 +25,27 @@ post_install_actions:
       echo -e "\n# ddev-saml-idp-certs\n.ddev/saml-idp/certs/" >> ../.gitignore
     fi
 
-    # Initialize configuration templates if they do not already exist
+    # Initialize user-owned config templates if they do not already exist.
+    # config.php is addon-owned and is NOT copied here; it is managed directly
+    # as a project_file so ddev get --update can refresh it safely.
     mkdir -p saml-idp/config
-    for f in config.php config-override.php authsources.php; do
+    for f in config-override.php authsources.php; do
       if [ ! -f "saml-idp/config/$f" ]; then
         cp "saml-idp/defaults/config/$f" "saml-idp/config/$f"
+        # Strip #ddev-generated so DDEV does not overwrite user edits on update
+        sed -i 's|// #ddev-generated||' "saml-idp/config/$f"
       fi
     done
 
-    # Initialize metadata templates if they do not already exist
+    # Initialize user-owned metadata templates if they do not already exist.
+    # saml20-idp-hosted.php is addon-owned and is NOT copied here; it is managed
+    # directly as a project_file so ddev get --update can refresh it safely.
     mkdir -p saml-idp/metadata
-    for f in saml20-idp-hosted.php saml20-sp-remote.php; do
+    for f in saml20-sp-remote.php; do
       if [ ! -f "saml-idp/metadata/$f" ]; then
         cp "saml-idp/defaults/metadata/$f" "saml-idp/metadata/$f"
+        # Strip #ddev-generated so DDEV does not overwrite user edits on update
+        sed -i 's|// #ddev-generated||' "saml-idp/metadata/$f"
       fi
     done
 

@@ -1,4 +1,5 @@
 <?php
+// #ddev-generated
 /**
  * Main SimpleSAMLphp configuration bootstrap.
  * This loads the baseline configuration from the package distribution and applies DDEV overrides.

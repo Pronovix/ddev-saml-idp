@@ -1,4 +1,5 @@
 <?php
+// #ddev-generated
 /**
  * SAML 2.0 SP metadata for SimpleSAMLphp.
  *

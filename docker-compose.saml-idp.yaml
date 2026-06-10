@@ -13,6 +13,7 @@ services:
         PHP_IMAGE_TAG: ${PHP_IMAGE_TAG:-8.4}
         # SSP_VERSION defines the SimpleSAMLphp version or version constraint to install.
         SSP_VERSION: ${SSP_VERSION:-^2.2}
+    image: ${SAML_IDP_DOCKER_IMAGE:-saml-idp}-${DDEV_SITENAME}-built
     restart: "no"
     env_file:
       - .env.saml-idp
