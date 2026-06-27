@@ -31,11 +31,14 @@ This add-on is designed to streamline local SAML integration and testing for web
 
     - **Persistent configuration (recommended):**
       If you want the SAML IdP service to always start automatically alongside your project, add the `saml-idp` profile to your `.ddev/config.local.yaml` (or `.ddev/config.yaml`) file:
+
       ```yaml
       profiles:
         - saml-idp
       ```
+
       Then restart your project:
+
       ```bash
       ddev restart
       ```
