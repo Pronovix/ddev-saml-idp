@@ -74,7 +74,7 @@ The default authentication source (`example-userpass`) comes preloaded with thre
 | **`editor`** | `password` | Content Editor | `editor@example.com` | `editor` |
 | **`user1`** | `password` | Test User 1 | `user1@example.com` | `member` |
 
-## Step-by-Step Integration with Drupal `samlauth`
+## Step-by-Step Integration with `samlauth` Module
 
 Setting up SAML integration in local Drupal development is incredibly easy with this add-on. Here is a step-by-step configuration guide for the Drupal **SAML Authentication (`samlauth`)** module:
 
@@ -98,27 +98,20 @@ ddev drush pm:enable samlauth -y
 >
 > **If you wish to configure or verify them manually via the Drupal Admin UI (`/admin/config/people/saml`), you MUST empty or comment out the content inside the `// --- BEGIN DDEV SAML IDP OVERRIDES ---` block first.** Otherwise, the PHP settings overrides take precedence and any settings you save in the UI will be ignored.
 
-### Step 2: Configure Service Provider (SP) Keys in Drupal
-The IdP requires your Service Provider (Drupal) to sign its authentication requests. The DDEV SAML IdP container automatically generates matching keys for this purpose on startup inside `.ddev/saml-idp/certs/`.
-
-Since `.ddev/` is mounted inside the DDEV web container at `/mnt/ddev_config/`, your Drupal site can point directly to these keys on the local filesystem:
-- **SP Private Key Path:** `/mnt/ddev_config/saml-idp/certs/sp.key` *(or with file prefix `file:/mnt/ddev_config/saml-idp/certs/sp.key`)*
-- **SP X.509 Certificate Path:** `/mnt/ddev_config/saml-idp/certs/sp.crt` *(or with file prefix `file:/mnt/ddev_config/saml-idp/certs/sp.crt`)*
-
-### Step 3: Configure `samlauth` Module Settings (Manual UI Verification)
+### (optional) Step 2: Configure `samlauth` Module Manually
 If you have cleared/commented out the settings overrides block and want to set up `samlauth` manually in the Drupal UI at `/admin/config/people/saml`, enter the following values:
 
 #### Service Provider (SP) Settings
 - **SP Entity ID:** `[site:base-url]` *(or `https://<your-project>.ddev.site`)*
 - **Type of storage:** `File`
-- **Private key path:** `file:/mnt/ddev_config/saml-idp/certs/sp.key`
-- **X.509 certificate path:** `file:/mnt/ddev_config/saml-idp/certs/sp.crt`
+- **Private key path:** `/mnt/ddev_config/saml-idp/certs/sp.key`
+- **X.509 certificate path:** `/mnt/ddev_config/saml-idp/certs/sp.crt`
 
 #### Identity Provider (IdP) Settings
 - **IdP Entity ID:** `https://idp.<your-project>.ddev.site/simplesaml/saml2/idp/metadata`
 - **Single Sign-On Service:** `https://idp.<your-project>.ddev.site/simplesaml/saml2/idp/SSOService.php`
 - **Single Logout Service:** `https://idp.<your-project>.ddev.site/simplesaml/saml2/idp/SingleLogoutService.php`
-- **X.509 Certificate:** Enter `file:/mnt/ddev_config/saml-idp/certs/idp.crt` into this field, OR copy and paste the entire PEM content of `.ddev/saml-idp/certs/idp.crt` (including the `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` lines).
+- **X.509 Certificate:** Enter `/mnt/ddev_config/saml-idp/certs/idp.crt` into this field, OR copy and paste the entire PEM content of `.ddev/saml-idp/certs/idp.crt` (including the `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` lines).
 
 #### User Attribute Mapping (on the **Login / Users** tab)
 - **Unique ID source:** `Attribute`
@@ -129,7 +122,7 @@ If you have cleared/commented out the settings overrides block and want to set u
 - Check **Attempt to link SAML data to existing Drupal users**
 - Click **Save configuration**.
 
-### Step 4: Test Login!
+### Step 3: Test Login!
 1. Open a new Incognito/Private browser window.
 2. Go to `https://<your-project>.ddev.site/saml/login`.
 3. You will be redirected to your local SimpleSAMLphp login page at `https://idp.<your-project>.ddev.site`.
