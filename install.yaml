@@ -33,7 +33,7 @@ post_install_actions:
       if [ ! -f "saml-idp/config/$f" ]; then
         cp "saml-idp/defaults/config/$f" "saml-idp/config/$f"
         # Strip #ddev-generated so DDEV does not overwrite user edits on update
-        sed -i 's|// #ddev-generated||' "saml-idp/config/$f"
+        sed 's|// #ddev-generated||' "saml-idp/config/$f" > "saml-idp/config/$f.tmp" && mv "saml-idp/config/$f.tmp" "saml-idp/config/$f"
       fi
     done
 
@@ -45,7 +45,7 @@ post_install_actions:
       if [ ! -f "saml-idp/metadata/$f" ]; then
         cp "saml-idp/defaults/metadata/$f" "saml-idp/metadata/$f"
         # Strip #ddev-generated so DDEV does not overwrite user edits on update
-        sed -i 's|// #ddev-generated||' "saml-idp/metadata/$f"
+        sed 's|// #ddev-generated||' "saml-idp/metadata/$f" > "saml-idp/metadata/$f.tmp" && mv "saml-idp/metadata/$f.tmp" "saml-idp/metadata/$f"
       fi
     done
 

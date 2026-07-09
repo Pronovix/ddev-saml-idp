@@ -13,6 +13,6 @@ hooks:
             echo "SAML_IDP_PRIMARY_HOST=idp.$primary_host" >> .ddev/.env.web
           else
             # Update the existing line in-place so the value stays current
-            sed -i "s|^SAML_IDP_PRIMARY_HOST=.*|SAML_IDP_PRIMARY_HOST=idp.$primary_host|" .ddev/.env.web
+            sed "s|^SAML_IDP_PRIMARY_HOST=.*|SAML_IDP_PRIMARY_HOST=idp.$primary_host|" .ddev/.env.web > .ddev/saml-idp-tmp.env.web && mv .ddev/saml-idp-tmp.env.web .ddev/.env.web
           fi
         fi
