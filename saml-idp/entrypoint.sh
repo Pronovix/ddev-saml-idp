@@ -35,6 +35,9 @@ SP_CRT="${CERT_DIR}/sp.crt"
 # After generating certs, set ownership to host user so bind-mount files are deletable from the host
 CERT_OWNER_UID="${DDEV_UID:-1000}"
 CERT_OWNER_GID="${DDEV_GID:-1000}"
+# Get www-data GID for cross-container access (typically 33 in Debian-based images)
+WWW_DATA_GID=$(getent group www-data | cut -d: -f3)
+WWW_DATA_GID="${WWW_DATA_GID:-33}"
 
 if [ -f "${IDP_KEY}" ] && [ -f "${IDP_CRT}" ] && [ -f "${SP_KEY}" ] && [ -f "${SP_CRT}" ]; then
     echo "SAML signing certificates already exist. Skipping."
@@ -58,9 +61,16 @@ else
         chmod 644 "${SP_CRT}" "${SP_KEY}"
     fi
 
-    chown -R "${CERT_OWNER_UID}:${CERT_OWNER_GID}" "${CERT_DIR}"
+    # Set ownership to host user but group to www-data for cross-container access
+    chown "${CERT_OWNER_UID}:${WWW_DATA_GID}" "${IDP_KEY}" "${SP_KEY}"
+    chown "${CERT_OWNER_UID}:${CERT_OWNER_GID}" "${IDP_CRT}" "${SP_CRT}"
+    # Private keys: readable by owner and group (www-data)
     chmod 640 "${IDP_KEY}" "${SP_KEY}"
+    # Certificates: world-readable (public keys)
     chmod 644 "${IDP_CRT}" "${SP_CRT}"
+    # Ensure cert directory is executable for www-data group
+    chown "${CERT_OWNER_UID}:${WWW_DATA_GID}" "${CERT_DIR}"
+    chmod 750 "${CERT_DIR}"
 fi
 
 # Copy .gitignore to the saml-idp root if missing
