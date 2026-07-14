@@ -58,11 +58,12 @@ post_install_actions:
     read -r -d '' OVERRIDES_BLOCK << 'EOF' || true
     // --- BEGIN DDEV SAML IDP OVERRIDES ---
     if (getenv('IS_DDEV_PROJECT')) {
+      $sp_host = getenv('SAML_SP_PRIMARY_HOST') ?: 'example.ddev.site';
       $idp_host = getenv('SAML_IDP_PRIMARY_HOST') ?: 'idp.example.ddev.site';
       $idp_base_url = 'https://' . $idp_host;
 
       # Should be the same as $primary_url.
-      $config['samlauth.authentication']['sp_entity_id'] = '[site:base-url]';
+      $config['samlauth.authentication']['sp_entity_id'] = 'https://' . $sp_host;
       $config['samlauth.authentication']['sp_x509_certificate'] = 'file:/mnt/ddev_config/saml-idp/certs/sp.crt';
       $config['samlauth.authentication']['sp_private_key'] = 'file:/mnt/ddev_config/saml-idp/certs/sp.key';
 
