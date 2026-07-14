@@ -33,7 +33,8 @@ post_install_actions:
       if [ ! -f "saml-idp/config/$f" ]; then
         cp "saml-idp/defaults/config/$f" "saml-idp/config/$f"
         # Strip #ddev-generated so DDEV does not overwrite user edits on update
-        sed -i 's|// #ddev-generated||' "saml-idp/config/$f"
+        # macOS requires an extension argument for sed -i, even if empty
+        sed -i .bak 's|// #ddev-generated||' "saml-idp/config/$f" && rm -f "saml-idp/config/$f.bak"
       fi
     done
 
@@ -45,7 +46,8 @@ post_install_actions:
       if [ ! -f "saml-idp/metadata/$f" ]; then
         cp "saml-idp/defaults/metadata/$f" "saml-idp/metadata/$f"
         # Strip #ddev-generated so DDEV does not overwrite user edits on update
-        sed -i 's|// #ddev-generated||' "saml-idp/metadata/$f"
+        # macOS requires an extension argument for sed -i, even if empty
+        sed -i .bak 's|// #ddev-generated||' "saml-idp/metadata/$f" && rm -f "saml-idp/metadata/$f.bak"
       fi
     done
 
