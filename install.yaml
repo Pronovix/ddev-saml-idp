@@ -78,6 +78,9 @@ post_install_actions:
       $config['samlauth.authentication']['unique_id_attribute'] = 'uid';
       $config['samlauth.authentication']['user_name_attribute'] = 'cn';
       $config['samlauth.authentication']['user_mail_attribute'] = 'email';
+      // Optional: Synchronize user attributes on login.
+      $config['samlauth.authentication']['sync_name'] = TRUE;
+      $config['samlauth.authentication']['sync_mail'] = TRUE;
     }
     // --- END DDEV SAML IDP OVERRIDES ---
     EOF
