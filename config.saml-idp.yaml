@@ -12,18 +12,19 @@ hooks:
           touch .ddev/.env.web
 
           # Update or append SAML_SP_PRIMARY_HOST in .env.web
-          if grep -q "^SAML_SP_PRIMARY_HOST=" .ddev/.env.web; then
-            # macOS requires an extension argument for sed -i, even if empty
-            sed -i .bak "s|^SAML_SP_PRIMARY_HOST=.*|SAML_SP_PRIMARY_HOST=$primary_host|" .ddev/.env.web && rm -f .ddev/.env.web.bak
-          else
+          # Use a temp file for sed to ensure cross-platform compatibility.
+          # The two sed commands are combined to avoid race conditions on the temp file.
+          sed -e "s|^SAML_SP_PRIMARY_HOST=.*|SAML_SP_PRIMARY_HOST=$primary_host|" \
+              -e "s|^SAML_IDP_PRIMARY_HOST=.*|SAML_IDP_PRIMARY_HOST=idp.$primary_host|" \
+              .ddev/.env.web > .ddev/.env.web.tmp && mv .ddev/.env.web.tmp .ddev/.env.web
+
+          # Append SAML_SP_PRIMARY_HOST if it does not exist.
+          if ! grep -q "^SAML_SP_PRIMARY_HOST=" .ddev/.env.web; then
             echo "SAML_SP_PRIMARY_HOST=$primary_host" >> .ddev/.env.web
           fi
 
-          # Update or append SAML_IDP_PRIMARY_HOST in .env.web
-          if grep -q "^SAML_IDP_PRIMARY_HOST=" .ddev/.env.web; then
-            # macOS requires an extension argument for sed -i, even if empty
-            sed -i .bak "s|^SAML_IDP_PRIMARY_HOST=.*|SAML_IDP_PRIMARY_HOST=idp.$primary_host|" .ddev/.env.web && rm -f .ddev/.env.web.bak
-          else
+          # Append SAML_IDP_PRIMARY_HOST if it does not exist.
+          if ! grep -q "^SAML_IDP_PRIMARY_HOST=" .ddev/.env.web; then
             echo "SAML_IDP_PRIMARY_HOST=idp.$primary_host" >> .ddev/.env.web
           fi
         fi
