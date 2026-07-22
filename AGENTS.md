@@ -18,3 +18,6 @@ To optimize token usage, do not read the entire `README.md` unless you need spec
 ## DDEV Environment
 - This project is designed to be worked on within a DDEV environment.
 - If the `IS_DDEV_PROJECT` environment variable is set, or if the `ddev` command is not available, you are already running inside a DDEV container. In this case, **never** attempt to execute commands prefixed with `ddev` (such as `ddev ...`); instead, run those commands directly (e.g., run `composer` or `drush` directly without the `ddev` prefix).
+
+## Shell Compatibility
+- All shell commands in `install.yaml`, `config.*.yaml`, and hooks must be **macOS (BSD) and Linux (GNU) compatible**.
