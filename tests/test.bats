@@ -206,6 +206,38 @@ EOF
   rm -f .ddev/docker-compose.version-pinning.yaml
 }
 
+@test "always start persistent configuration" {
+  set -eu -o pipefail
+  echo "# ddev add-on get ${DIR} with project ${PROJNAME} in $(pwd)" >&3
+  run ddev add-on get "${DIR}"
+  assert_success
+
+  # Plain restart without profile flags should not start saml-idp by default
+  run ddev restart -y
+  assert_success
+  run ddev exec -s saml-idp echo "running"
+  assert_failure
+
+  # Override profile constraint using Docker Compose !reset tag in override file
+  # (using underscore ensures the override sorts and loads after docker-compose.saml-idp.yaml)
+  cat <<EOF > .ddev/docker-compose.saml-idp_enable.yaml
+services:
+  saml-idp:
+    profiles: !reset []
+EOF
+
+  # Plain restart should now automatically start saml-idp without --profiles flag
+  run ddev restart -y
+  assert_success
+  health_checks
+  run ddev exec -s saml-idp echo "running"
+  assert_success
+  assert_output --partial "running"
+
+  # Clean up override file
+  rm -f .ddev/docker-compose.saml-idp_enable.yaml
+}
+
 # bats test_tags=release
 @test "install from release" {
   set -eu -o pipefail
