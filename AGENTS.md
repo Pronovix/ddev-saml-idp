@@ -21,3 +21,15 @@ To optimize token usage, do not read the entire `README.md` unless you need spec
 
 ## Shell Compatibility
 - All shell commands in `install.yaml`, `config.*.yaml`, and hooks must be **macOS (BSD) and Linux (GNU) compatible**.
+
+## Writing bats tests for the SAML IdP service
+
+The `saml-idp` service is gated behind an optional Docker Compose profile. A plain `ddev restart` does not start it unless an override file is used. Tests that need the container must use:
+
+```bash
+ddev restart && ddev start --profiles=saml-idp
+```
+
+`ddev restart` alone reuses already-running services; since `saml-idp` is not active by default, the container will not exist and any subsequent commands targeting it will fail.
+
+Note: `ddev restart` (including `--no-cache`) does not rebuild profile-gated services ([ddev/ddev#8817](https://github.com/ddev/ddev/issues/8817)). While targeted rebuilding via `ddev utility rebuild -s <service>` (or `ddev debug rebuild -s <service>`) for profile-gated services was fixed in DDEV v1.25.3 ([ddev/ddev#8463](https://github.com/ddev/ddev/pull/8463)), `ddev restart` does not support `--profiles` yet ([ddev/ddev#7904](https://github.com/ddev/ddev/issues/7904)). Therefore, `ddev restart && ddev start --profiles=saml-idp` is required after rebuilding to bring the container up with all dependencies.
