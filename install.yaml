@@ -34,7 +34,7 @@ post_install_actions:
         cp "saml-idp/defaults/config/$f" "saml-idp/config/$f"
         # Strip #ddev-generated so DDEV does not overwrite user edits on update
         # macOS requires an extension argument for sed -i, even if empty
-        sed -i .bak 's|// #ddev-generated||' "saml-idp/config/$f" && rm -f "saml-idp/config/$f.bak"
+        sed -i.bak 's|// #ddev-generated||' "saml-idp/config/$f" && rm -f "saml-idp/config/$f.bak"
       fi
     done
 
@@ -47,7 +47,7 @@ post_install_actions:
         cp "saml-idp/defaults/metadata/$f" "saml-idp/metadata/$f"
         # Strip #ddev-generated so DDEV does not overwrite user edits on update
         # macOS requires an extension argument for sed -i, even if empty
-        sed -i .bak 's|// #ddev-generated||' "saml-idp/metadata/$f" && rm -f "saml-idp/metadata/$f.bak"
+        sed -i.bak 's|// #ddev-generated||' "saml-idp/metadata/$f" && rm -f "saml-idp/metadata/$f.bak"
       fi
     done
 
@@ -59,7 +59,7 @@ post_install_actions:
     # Define the SAML IdP configuration overrides block for Drupal's samlauth module
     read -r -d '' OVERRIDES_BLOCK << 'EOF' || true
     // --- BEGIN DDEV SAML IDP OVERRIDES ---
-    if (getenv('IS_DDEV_PROJECT')) {
+    if (getenv('IS_DDEV_PROJECT') == 'true') {
       $sp_host = getenv('SAML_SP_PRIMARY_HOST') ?: 'example.ddev.site';
       $idp_host = getenv('SAML_IDP_PRIMARY_HOST') ?: 'idp.example.ddev.site';
       $idp_base_url = 'https://' . $idp_host;
@@ -99,6 +99,10 @@ post_install_actions:
         fi
         if ! grep -q "BEGIN DDEV SAML IDP OVERRIDES" "$LOCAL_FILE"; then
           echo -e "\n$OVERRIDES_BLOCK" >> "$LOCAL_FILE"
+        else
+          # TODO: Remove this upgrade path in 1.0.0 stable.
+          # Upgrade existing installations using legacy 'if (getenv('\''IS_DDEV_PROJECT'\'')) {' condition.
+          sed -i.bak "s|if (getenv('IS_DDEV_PROJECT')) {|if (getenv('IS_DDEV_PROJECT') == 'true') {|g" "$LOCAL_FILE" && rm -f "$LOCAL_FILE.bak"
         fi
       else
         if ! grep -E "^\s*[^#/]*(include|require).*settings\.local\.php" "$TARGET_DIR/settings.php" >/dev/null 2>&1; then
@@ -118,6 +122,10 @@ post_install_actions:
         fi
         if ! grep -q "BEGIN DDEV SAML IDP OVERRIDES" "$LOCAL_FILE"; then
           echo -e "\n$OVERRIDES_BLOCK" >> "$LOCAL_FILE"
+        else
+          # TODO: Remove this upgrade path in 1.0.0 stable.
+          # Upgrade existing installations using legacy 'if (getenv('\''IS_DDEV_PROJECT'\'')) {' condition.
+          sed -i.bak "s|if (getenv('IS_DDEV_PROJECT')) {|if (getenv('IS_DDEV_PROJECT') == 'true') {|g" "$LOCAL_FILE" && rm -f "$LOCAL_FILE.bak"
         fi
       fi
     fi

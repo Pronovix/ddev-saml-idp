@@ -59,9 +59,20 @@ teardown() {
   run ddev add-on get "${DIR}"
   assert_success
 
-  # Verify project.local.settings.php exists and contains the overrides
+  # Verify project.local.settings.php exists and contains the overrides with resilient condition
   assert_file_exists web/sites/default/project.local.settings.php
   run grep -q "BEGIN DDEV SAML IDP OVERRIDES" web/sites/default/project.local.settings.php
+  assert_success
+  run grep -q "if (getenv('IS_DDEV_PROJECT') == 'true') {" web/sites/default/project.local.settings.php
+  assert_success
+
+  # Test upgrade path: simulate pre-existing installation with legacy condition in project.local.settings.php
+  echo -e "<?php\n// --- BEGIN DDEV SAML IDP OVERRIDES ---\nif (getenv('IS_DDEV_PROJECT')) {\n  \$custom = 'value';\n}\n// --- END DDEV SAML IDP OVERRIDES ---" > web/sites/default/project.local.settings.php
+  run ddev add-on get "${DIR}"
+  assert_success
+  run grep -q "if (getenv('IS_DDEV_PROJECT') == 'true') {" web/sites/default/project.local.settings.php
+  assert_success
+  run grep -q "\$custom = 'value';" web/sites/default/project.local.settings.php
   assert_success
 
   # Clean up and reset for Test case 2: settings.php is empty/generic (no local settings references)
@@ -75,7 +86,18 @@ teardown() {
   assert_file_exists web/sites/default/settings.local.php
   run grep -q "BEGIN DDEV SAML IDP OVERRIDES" web/sites/default/settings.local.php
   assert_success
+  run grep -q "if (getenv('IS_DDEV_PROJECT') == 'true') {" web/sites/default/settings.local.php
+  assert_success
   run grep -q "include __DIR__ . '/settings.local.php';" web/sites/default/settings.php
+  assert_success
+
+  # Test upgrade path: simulate pre-existing installation with legacy condition in settings.local.php
+  echo -e "<?php\n// --- BEGIN DDEV SAML IDP OVERRIDES ---\nif (getenv('IS_DDEV_PROJECT')) {\n  \$custom = 'value';\n}\n// --- END DDEV SAML IDP OVERRIDES ---" > web/sites/default/settings.local.php
+  run ddev add-on get "${DIR}"
+  assert_success
+  run grep -q "if (getenv('IS_DDEV_PROJECT') == 'true') {" web/sites/default/settings.local.php
+  assert_success
+  run grep -q "\$custom = 'value';" web/sites/default/settings.local.php
   assert_success
 
   # Test case 3: settings.php has a commented-out settings.local.php reference
